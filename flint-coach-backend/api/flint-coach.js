@@ -21,8 +21,24 @@ const SYSTEM_PROMPT = fs.readFileSync(
   "utf-8"
 );
 
-// Set via ALLOWED_ORIGIN env var — the live Bad Day Plan URL.
-const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || "*";
+// CORS origin — set ALLOWED_ORIGIN explicitly, or derive it from
+// BDP_PAGE_URL (the same var provision-bad-day-token.js uses to build the
+// customer's access link) so Ryan only has to set the URL once.
+function resolveAllowedOrigin() {
+  if (process.env.ALLOWED_ORIGIN) return process.env.ALLOWED_ORIGIN;
+
+  if (process.env.BDP_PAGE_URL) {
+    try {
+      return new URL(process.env.BDP_PAGE_URL).origin;
+    } catch {
+      // fall through to wildcard
+    }
+  }
+
+  return "*";
+}
+
+const ALLOWED_ORIGIN = resolveAllowedOrigin();
 
 function getRedisClient() {
   const url =

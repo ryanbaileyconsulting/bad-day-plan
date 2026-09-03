@@ -1,8 +1,14 @@
 // Vercel serverless function: Systeme.io purchase webhook for Bad Day Plan.
 // Mirrors the pattern used by One Offer Forward's api/provision-token.js —
 // on a successful purchase, Systeme.io calls this endpoint, which mints a
-// per-customer access token and stores it in Redis under the "bdp:"
-// namespace so api/flint-coach.js can validate it.
+// per-customer access token, stores it in Redis under the "bdp:" namespace
+// (so api/flint-coach.js can validate it), and emails the customer their
+// access link directly via Resend.
+//
+// We send the email ourselves rather than relying on a Systeme.io merge
+// field, because Systeme.io's outbound automation webhooks are
+// fire-and-forget — nothing reads this function's response back into a
+// contact field for their own email templates to use.
 //
 // NOTE: REQUIRED_TAG below is a placeholder. Confirm the exact tag name
 // Systeme.io sends for a Bad Day Plan purchase (trigger a real test webhook
@@ -39,6 +45,50 @@ function secretsMatch(provided, expected) {
   }
 
   return timingSafeEqual(providedBuffer, expectedBuffer);
+}
+
+function createAccessUrl(token) {
+  const pageUrl = process.env.BDP_PAGE_URL;
+  if (!pageUrl) return null;
+
+  const base = pageUrl.replace(/\/+$/, "");
+  return `${base}?token=${encodeURIComponent(token)}`;
+}
+
+async function sendDeliveryEmail(email, accessUrl) {
+  const apiKey = process.env.RESEND_API_KEY;
+  const from = process.env.BDP_FROM_EMAIL;
+
+  if (!apiKey || !from || !accessUrl) {
+    console.error(
+      "Skipping delivery email: RESEND_API_KEY, BDP_FROM_EMAIL, or " +
+        "BDP_PAGE_URL is not configured."
+    );
+    return;
+  }
+
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      from,
+      to: email,
+      subject: "Your Bad Day Plan link",
+      html: `
+        <p>Here's your link to The Bad Day Plan — bookmark it, you'll want it on the day you need it:</p>
+        <p><a href="${accessUrl}">${accessUrl}</a></p>
+        <p>This link also unlocks Flint, the coach built into the page, if you want to talk something through.</p>
+      `,
+    }),
+  });
+
+  if (!response.ok) {
+    const errText = await response.text();
+    console.error("Resend delivery email failed:", errText);
+  }
 }
 
 export default async function handler(req, res) {
@@ -99,7 +149,7 @@ export default async function handler(req, res) {
 
     /*
      * If Systeme sends the same event twice, return the existing token
-     * rather than minting a duplicate.
+     * without re-minting or re-emailing.
      */
     const existingToken = await redis.get(contactKey);
 
@@ -128,6 +178,9 @@ export default async function handler(req, res) {
     await redis.set(`bdp:token:${accessToken}`, accessRecord);
     await redis.set(contactKey, accessToken);
     await redis.set(`bdp:email:${email}`, accessToken);
+
+    const accessUrl = createAccessUrl(accessToken);
+    await sendDeliveryEmail(email, accessUrl);
 
     return res.status(200).json({
       ok: true,
