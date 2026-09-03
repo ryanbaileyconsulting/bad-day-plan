@@ -390,6 +390,155 @@
     .card{ box-shadow:none; border-radius:0; padding:0; }
     .plan-card{ border:2px solid var(--gold); }
   }
+
+  /* Flint chat */
+  .flint-fab{
+    position:fixed;
+    right:20px; bottom:20px;
+    background:var(--gold);
+    color:var(--header-bg);
+    border:none;
+    border-radius:30px;
+    padding:14px 20px;
+    font-family:'Work Sans', sans-serif;
+    font-weight:600;
+    font-size:14px;
+    letter-spacing:0.01em;
+    box-shadow:0 8px 24px rgba(43,33,23,0.25);
+    cursor:pointer;
+    z-index:100;
+    transition:opacity .2s;
+  }
+  .flint-fab:hover{ opacity:0.9; }
+
+  .flint-overlay{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(36,28,19,0.55);
+    z-index:200;
+    align-items:flex-end;
+    justify-content:center;
+  }
+  .flint-overlay.open{ display:flex; }
+
+  .flint-panel{
+    background:var(--tan-bg);
+    width:100%;
+    max-width:480px;
+    height:min(640px, 88vh);
+    border-radius:18px 18px 0 0;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+    box-shadow:0 -12px 40px rgba(0,0,0,0.3);
+  }
+  @media (min-width:600px){
+    .flint-overlay{ align-items:center; }
+    .flint-panel{ border-radius:18px; height:min(640px, 80vh); margin-bottom:0; }
+  }
+
+  .flint-header{
+    background:var(--header-bg);
+    padding:16px 20px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex:0 0 auto;
+  }
+  .flint-header-title{
+    font-family:'Playfair Display', serif;
+    font-size:17px;
+    color:var(--white);
+  }
+  .flint-header-title span{ color:var(--gold); }
+  .flint-header-sub{
+    font-size:11px;
+    color:var(--gold-soft);
+    margin-top:2px;
+  }
+  .flint-close{
+    background:none;
+    border:none;
+    color:var(--gold-soft);
+    font-size:22px;
+    line-height:1;
+    cursor:pointer;
+    padding:4px 6px;
+  }
+  .flint-close:hover{ color:var(--gold); }
+
+  .flint-messages{
+    flex:1 1 auto;
+    overflow-y:auto;
+    padding:18px 20px;
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+  }
+  .flint-msg{
+    max-width:85%;
+    padding:11px 14px;
+    border-radius:14px;
+    font-size:14px;
+    line-height:1.5;
+    white-space:pre-wrap;
+  }
+  .flint-msg.assistant{
+    align-self:flex-start;
+    background:var(--white);
+    border:1px solid var(--line);
+    color:var(--near-black);
+    border-bottom-left-radius:4px;
+  }
+  .flint-msg.user{
+    align-self:flex-end;
+    background:var(--near-black);
+    color:var(--white);
+    border-bottom-right-radius:4px;
+  }
+  .flint-msg.system-note{
+    align-self:center;
+    background:none;
+    color:var(--coffee-soft);
+    font-size:12.5px;
+    text-align:center;
+    max-width:100%;
+    font-style:italic;
+  }
+
+  .flint-footer{
+    flex:0 0 auto;
+    border-top:1px solid var(--line);
+    background:var(--tan-bg);
+    padding:12px 16px;
+  }
+  .flint-remaining{
+    font-size:11px;
+    color:var(--coffee-soft);
+    text-align:center;
+    margin-bottom:8px;
+  }
+  .flint-input-row{
+    display:flex;
+    gap:8px;
+  }
+  .flint-input-row textarea{
+    flex:1;
+    min-height:0;
+    height:44px;
+    max-height:120px;
+    padding:11px 13px;
+    margin-bottom:0;
+    font-size:14px;
+    resize:none;
+  }
+  .flint-send{
+    flex:0 0 auto;
+    padding:0 18px;
+    font-size:13px;
+  }
+  .flint-send:disabled{ opacity:0.4; }
 </style>
 </head>
 <body>
@@ -529,6 +678,28 @@
       </div>
     </div>
 
+  </div>
+</div>
+
+<button type="button" class="flint-fab" id="flintFab">Talk to Flint</button>
+
+<div class="flint-overlay" id="flintOverlay">
+  <div class="flint-panel">
+    <div class="flint-header">
+      <div>
+        <div class="flint-header-title">Talk to <span>Flint</span></div>
+        <div class="flint-header-sub">Your restart coach. Tell him what's going on.</div>
+      </div>
+      <button type="button" class="flint-close" id="flintClose" aria-label="Close">&times;</button>
+    </div>
+    <div class="flint-messages" id="flintMessages"></div>
+    <div class="flint-footer">
+      <div class="flint-remaining" id="flintRemaining"></div>
+      <div class="flint-input-row">
+        <textarea id="flintInput" placeholder="What's got you wanting to quit today?"></textarea>
+        <button type="button" class="flint-send" id="flintSend">Send</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -681,6 +852,119 @@
 
   // init
   setRibbon(1);
+
+  // --- Flint chat ---
+  const FLINT_API_URL = 'REPLACE-WITH-YOUR-FLINT-API-URL/api/flint-coach';
+
+  const flintFab = document.getElementById('flintFab');
+  const flintOverlay = document.getElementById('flintOverlay');
+  const flintClose = document.getElementById('flintClose');
+  const flintMessages = document.getElementById('flintMessages');
+  const flintInput = document.getElementById('flintInput');
+  const flintSend = document.getElementById('flintSend');
+  const flintRemaining = document.getElementById('flintRemaining');
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const flintToken = urlParams.get('token');
+
+  let flintHistory = [];
+  let flintBusy = false;
+  let flintLocked = false;
+
+  function flintAddMessage(role, text){
+    const el = document.createElement('div');
+    el.className = 'flint-msg ' + role;
+    el.textContent = text;
+    flintMessages.appendChild(el);
+    flintMessages.scrollTop = flintMessages.scrollHeight;
+  }
+
+  function flintLock(message){
+    flintLocked = true;
+    flintInput.disabled = true;
+    flintSend.disabled = true;
+    if(message) flintAddMessage('system-note', message);
+  }
+
+  function flintSetRemaining(n){
+    if(typeof n === 'number'){
+      flintRemaining.textContent = n + ' message' + (n === 1 ? '' : 's') + ' left with Flint today';
+    }
+  }
+
+  flintFab.addEventListener('click', ()=>{
+    flintOverlay.classList.add('open');
+    if(flintMessages.children.length === 0){
+      if(!flintToken){
+        flintAddMessage('assistant', "Hey — I'm Flint. This chat only works from your Bad Day Plan link (the one from your receipt), so I can tell it's really you. Open this page from that link and I'll be here.");
+        flintLock();
+      } else {
+        flintAddMessage('assistant', "Hey. I'm Flint. What's going on today — what's got you wanting to quit or restart?");
+      }
+    }
+    flintInput.focus();
+  });
+
+  flintClose.addEventListener('click', ()=> flintOverlay.classList.remove('open'));
+  flintOverlay.addEventListener('click', (e)=>{
+    if(e.target === flintOverlay) flintOverlay.classList.remove('open');
+  });
+
+  async function flintSendMessage(){
+    if(flintLocked || flintBusy) return;
+    const text = flintInput.value.trim();
+    if(!text) return;
+
+    flintAddMessage('user', text);
+    flintInput.value = '';
+    flintBusy = true;
+    flintSend.disabled = true;
+
+    try{
+      const res = await fetch(FLINT_API_URL, {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json' },
+        body:JSON.stringify({ token:flintToken, message:text, history:flintHistory })
+      });
+
+      if(res.status === 403){
+        flintLock("That link isn't recognised — reopen this page from your Bad Day Plan receipt link and try again.");
+        return;
+      }
+
+      if(res.status === 429){
+        const data = await res.json().catch(()=>({}));
+        flintAddMessage('assistant', data.message || "That's today's questions with Flint — come back tomorrow.");
+        flintSetRemaining(0);
+        flintLock();
+        return;
+      }
+
+      if(!res.ok){
+        flintAddMessage('system-note', "Flint's unavailable right now — try again in a minute.");
+        return;
+      }
+
+      const data = await res.json();
+      flintHistory.push({ role:'user', content:text });
+      flintHistory.push({ role:'assistant', content:data.reply });
+      flintAddMessage('assistant', data.reply);
+      flintSetRemaining(data.remaining);
+    } catch(err){
+      flintAddMessage('system-note', "Couldn't reach Flint — check your connection and try again.");
+    } finally {
+      flintBusy = false;
+      if(!flintLocked) flintSend.disabled = false;
+    }
+  }
+
+  flintSend.addEventListener('click', flintSendMessage);
+  flintInput.addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter' && !e.shiftKey){
+      e.preventDefault();
+      flintSendMessage();
+    }
+  });
 </script>
 
 </body>

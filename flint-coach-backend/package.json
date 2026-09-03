@@ -1,0 +1,12 @@
+{
+  "name": "flint-coach-backend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Flint AI coach — Vercel serverless backend for the Bad Day Plan order bump.",
+  "scripts": {
+    "dev": "vercel dev"
+  },
+  "dependencies": {
+    "@upstash/redis": "^1.38.0"
+  }
+}
