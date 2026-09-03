@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Bad Day Plan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  :root{
+    --near-black:#241C13;
+    --header-bg:#2B2117;
+    --tan-bg:#E9DFCC;
+    --coffee:#2E2417;
+    --coffee-soft:#8C7E68;
+    --gold:#C9A66B;
+    --gold-soft:#EFE3CB;
+    --line:#E2D8C2;
+    --white:#FFFFFF;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background:var(--tan-bg);
+    color:var(--coffee);
+    font-family:'Work Sans', sans-serif;
+    min-height:100vh;
+  }
+
+  /* Header */
+  header{
+    background:var(--header-bg);
+    padding:18px 24px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .logo{
+    font-family:'Work Sans', sans-serif;
+    font-weight:600;
+    font-size:14px;
+    letter-spacing:0.06em;
+    color:var(--white);
+  }
+  .logo span{ color:var(--gold); }
+  .start-over{
+    font-size:12px;
+    color:var(--gold-soft);
+    text-decoration:underline;
+    cursor:pointer;
+    background:none;
+    border:none;
+    font-family:'Work Sans', sans-serif;
+  }
+  .start-over:hover{ color:var(--gold); }
+
+  /* Step ribbon */
+  .ribbon{
+    background:var(--header-bg);
+    padding:0 24px 20px;
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    gap:0;
+  }
+  .ribbon-step{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    flex:1;
+    max-width:120px;
+  }
+  .ribbon-circle{
+    width:26px; height:26px;
+    border-radius:50%;
+    border:1px solid rgba(255,255,255,0.25);
+    color:rgba(255,255,255,0.45);
+    display:flex; align-items:center; justify-content:center;
+    font-size:12px; font-weight:600;
+    margin-bottom:8px;
+    transition:all .25s;
+  }
+  .ribbon-circle.active{
+    background:var(--gold);
+    border-color:var(--gold);
+    color:var(--header-bg);
+  }
+  .ribbon-circle.done{
+    background:transparent;
+    border-color:var(--gold);
+    color:var(--gold);
+  }
+  .ribbon-label{
+    font-size:10px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color:rgba(255,255,255,0.4);
+    text-align:center;
+    line-height:1.3;
+  }
+  .ribbon-label.active{ color:var(--gold); }
+  .ribbon-line{
+    height:1px;
+    background:rgba(255,255,255,0.15);
+    flex:0.6;
+    margin-top:13px;
+  }
+
+  /* Layout */
+  .wrap{
+    max-width:560px;
+    margin:0 auto;
+    padding:40px 16px 60px;
+  }
+
+  .icon-circle{
+    width:76px; height:76px;
+    border-radius:50%;
+    background:var(--white);
+    border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center;
+    margin:0 auto 14px;
+  }
+  .icon-caption{
+    text-align:center;
+    font-family:'Playfair Display', serif;
+    font-style:italic;
+    font-size:14px;
+    color:var(--coffee-soft);
+    margin-bottom:32px;
+  }
+
+  .card{
+    background:var(--white);
+    border-radius:16px;
+    box-shadow:0 12px 32px rgba(43,33,23,0.10), 0 2px 8px rgba(43,33,23,0.06);
+    padding:36px 32px;
+  }
+
+  .eyebrow{
+    font-size:12px;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    color:var(--gold);
+    font-weight:600;
+    margin-bottom:10px;
+  }
+  h1.title{
+    font-family:'Playfair Display', serif;
+    font-weight:700;
+    font-size:30px;
+    margin-bottom:10px;
+    letter-spacing:-0.01em;
+    color:var(--near-black);
+  }
+  .subtitle{
+    color:var(--coffee-soft);
+    font-size:15px;
+    margin-bottom:28px;
+    line-height:1.55;
+  }
+
+  .step{ display:none; }
+  .step.active{ display:block; }
+
+  label{
+    display:block;
+    font-size:14px;
+    font-weight:600;
+    margin-bottom:8px;
+    color:var(--near-black);
+  }
+  .hint{
+    font-size:13px;
+    color:var(--coffee-soft);
+    margin-bottom:20px;
+    line-height:1.5;
+  }
+  input[type=text]{
+    width:100%;
+    padding:14px 15px;
+    border:1px solid var(--line);
+    border-radius:10px;
+    background:var(--white);
+    font-family:'Work Sans', sans-serif;
+    font-size:15px;
+    color:var(--near-black);
+    margin-bottom:26px;
+  }
+  input[type=text]:focus{ outline:none; border-color:var(--gold); box-shadow:0 0 0 3px var(--gold-soft); }
+  input[type=text]::placeholder{ color:#B5AA92; }
+
+  .trigger-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-bottom:8px;
+  }
+  .trigger-option{
+    border:1px solid var(--line);
+    border-radius:10px;
+    background:var(--white);
+    padding:16px 14px;
+    font-family:'Work Sans', sans-serif;
+    font-size:14px;
+    font-weight:500;
+    color:var(--near-black);
+    text-align:left;
+    cursor:pointer;
+    transition:all .2s;
+  }
+  .trigger-option:hover{ border-color:var(--coffee-soft); }
+  .trigger-option.selected{
+    border-color:var(--gold);
+    background:var(--gold-soft);
+    box-shadow:0 0 0 1px var(--gold);
+  }
+  .trigger-option .t-label{ display:block; margin-bottom:2px; }
+  .trigger-option .t-desc{
+    display:block;
+    font-size:12px;
+    color:var(--coffee-soft);
+    font-weight:400;
+  }
+
+  .if-then-box{
+    border:1px solid var(--line);
+    border-radius:10px;
+    background:var(--gold-soft);
+    padding:20px;
+    margin-bottom:20px;
+  }
+  .if-then-box .ift-label{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.1em;
+    color:var(--coffee-soft);
+    margin-bottom:6px;
+    display:block;
+  }
+  .if-then-box .ift-trigger{
+    font-family:'Playfair Display', serif;
+    font-size:18px;
+    color:var(--near-black);
+  }
+  textarea{
+    width:100%;
+    min-height:110px;
+    padding:14px 15px;
+    border:1px solid var(--line);
+    border-radius:10px;
+    background:var(--white);
+    font-family:'Work Sans', sans-serif;
+    font-size:15px;
+    color:var(--near-black);
+    resize:vertical;
+    line-height:1.5;
+    margin-bottom:8px;
+  }
+  textarea:focus{ outline:none; border-color:var(--gold); box-shadow:0 0 0 3px var(--gold-soft); }
+  .char-hint{ font-size:12px; color:var(--coffee-soft); margin-bottom:24px; }
+
+  .suggestions{ margin-bottom:26px; }
+  .suggestions .sugg-label{
+    font-size:12px;
+    color:var(--coffee-soft);
+    margin-bottom:8px;
+  }
+  .sugg-pill{
+    display:inline-block;
+    border:1px solid var(--line);
+    border-radius:20px;
+    padding:8px 14px;
+    font-size:12.5px;
+    color:var(--coffee-soft);
+    margin:0 6px 6px 0;
+    cursor:pointer;
+    background:var(--white);
+    transition:all .2s;
+  }
+  .sugg-pill:hover{ border-color:var(--gold); color:var(--near-black); }
+
+  .btn-row{ display:flex; gap:10px; margin-top:8px; }
+  button{
+    font-family:'Work Sans', sans-serif;
+    font-size:14px;
+    font-weight:600;
+    letter-spacing:0.02em;
+    padding:14px 22px;
+    border-radius:10px;
+    border:1px solid var(--near-black);
+    background:var(--near-black);
+    color:var(--white);
+    cursor:pointer;
+    transition:opacity .2s;
+    flex:1;
+  }
+  button:hover{ opacity:0.88; }
+  button:disabled{ opacity:0.32; cursor:not-allowed; }
+  button.secondary{
+    background:transparent;
+    color:var(--near-black);
+    border:1px solid var(--line);
+    flex:0 0 auto;
+  }
+
+  /* Result card */
+  .plan-card{
+    border-radius:14px;
+    background:var(--header-bg);
+    color:var(--white);
+    padding:40px 32px;
+    margin-bottom:24px;
+  }
+  .plan-card .pc-eyebrow{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.14em;
+    color:var(--gold);
+    margin-bottom:16px;
+    text-align:center;
+    font-weight:600;
+  }
+  .plan-card .pc-title{
+    font-family:'Playfair Display', serif;
+    font-size:24px;
+    text-align:center;
+    margin-bottom:4px;
+  }
+  .plan-card .pc-offer{
+    text-align:center;
+    font-size:13px;
+    color:var(--gold-soft);
+    margin-bottom:28px;
+  }
+  .plan-card hr{
+    border:none;
+    border-top:1px solid rgba(201,166,107,0.3);
+    margin:24px 0;
+  }
+  .plan-card .pc-field-label{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.1em;
+    color:var(--gold);
+    margin-bottom:8px;
+    font-weight:600;
+  }
+  .plan-card .pc-trigger{
+    font-family:'Playfair Display', serif;
+    font-size:16px;
+    margin-bottom:20px;
+  }
+  .plan-card .pc-commitment{
+    font-size:16px;
+    line-height:1.6;
+    font-style:italic;
+  }
+  .plan-card .pc-date{
+    text-align:center;
+    font-size:12px;
+    color:var(--gold-soft);
+    margin-top:28px;
+  }
+
+  .result-note{
+    font-size:13px;
+    color:var(--coffee-soft);
+    text-align:center;
+    line-height:1.6;
+    margin-bottom:24px;
+  }
+
+  .video-frame{
+    border:1px solid var(--line);
+    border-radius:10px;
+    overflow:hidden;
+    background:#1A140D;
+  }
+
+  @media (max-width:480px){
+    .ribbon-label{ display:none; }
+    .card{ padding:28px 20px; }
+  }
+
+  @media print{
+    header,.ribbon,.icon-circle,.icon-caption,.result-note,.btn-row{ display:none !important; }
+    body{ background:white; }
+    .wrap{ padding:0; max-width:100%; }
+    .card{ box-shadow:none; border-radius:0; padding:0; }
+    .plan-card{ border:2px solid var(--gold); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">ONE OFFER <span>FORWARD</span></div>
+  <button class="start-over" id="startOverBtn">Start over</button>
+</header>
+
+<div class="ribbon" id="ribbon">
+  <!-- built by JS -->
+</div>
+
+<div class="wrap">
+
+  <div class="icon-circle" id="stepIcon">
+    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#2E2417" stroke-width="1.4">
+      <path d="M9 18h6M10 22h4M12 2a6 6 0 0 0-3 11.2c.5.3.8.9.8 1.5V15h4.4v-.3c0-.6.3-1.2.8-1.5A6 6 0 0 0 12 2z"/>
+    </svg>
+  </div>
+  <p class="icon-caption" id="stepCaption">Naming the day before it arrives...</p>
+
+  <div class="card">
+
+    <!-- STEP 0: INTRO VIDEO -->
+    <div class="step active" id="step-0">
+      <div class="eyebrow">Before you start</div>
+      <h1 class="title">This is short on purpose</h1>
+      <p class="subtitle">30 seconds on why three minutes is enough.</p>
+
+      <div class="video-frame">
+        <video id="introVideo" controls playsinline poster="" style="width:100%; display:block; border-radius:10px; background:#1A140D;">
+          <source src="REPLACE-WITH-YOUR-VIDEO-URL.mp4" type="video/mp4">
+        </video>
+      </div>
+
+      <div class="btn-row" style="margin-top:24px;">
+        <button class="secondary" id="skipIntro">Skip</button>
+        <button id="toStep1">Start →</button>
+      </div>
+    </div>
+
+    <!-- STEP 1 -->
+    <div class="step" id="step-1">
+      <div class="eyebrow">Step 1 of 3</div>
+      <h1 class="title">Name the trigger</h1>
+      <p class="subtitle">Most launches don't die from a bad idea. They die on a specific day. Let's name what that day looks like for you.</p>
+
+      <label for="offerName">What's the offer you're launching?</label>
+      <input type="text" id="offerName" placeholder="e.g. a weekly newsletter for freelance designers">
+
+      <label>What's got you restarting before?</label>
+      <p class="hint">Pick the one that's closest. You can only choose one — the point is naming your real trigger, not covering every base.</p>
+      <div class="trigger-grid" id="triggerGrid">
+        <button type="button" class="trigger-option" data-trigger="silence">
+          <span class="t-label">Silence</span>
+          <span class="t-desc">No response, no feedback</span>
+        </button>
+        <button type="button" class="trigger-option" data-trigger="no-sales">
+          <span class="t-label">No sales</span>
+          <span class="t-desc">Nobody's buying yet</span>
+        </button>
+        <button type="button" class="trigger-option" data-trigger="comparison">
+          <span class="t-label">Comparison</span>
+          <span class="t-desc">Seeing someone else's version</span>
+        </button>
+        <button type="button" class="trigger-option" data-trigger="criticism">
+          <span class="t-label">Criticism</span>
+          <span class="t-desc">A comment that stings</span>
+        </button>
+        <button type="button" class="trigger-option" data-trigger="boredom">
+          <span class="t-label">Boredom</span>
+          <span class="t-desc">The new-idea itch shows up</span>
+        </button>
+        <button type="button" class="trigger-option" data-trigger="other">
+          <span class="t-label">Something else</span>
+          <span class="t-desc">You know your pattern</span>
+        </button>
+      </div>
+
+      <div class="btn-row" style="margin-top:24px;">
+        <button id="toStep2" disabled>Continue →</button>
+      </div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="step" id="step-2">
+      <div class="eyebrow">Step 2 of 3</div>
+      <h1 class="title">Decide it now, calmly</h1>
+      <p class="subtitle">Write the instruction while you're thinking clearly, not while you're mid-spiral.</p>
+
+      <div class="if-then-box">
+        <span class="ift-label">Your trigger</span>
+        <span class="ift-trigger" id="triggerDisplay">—</span>
+      </div>
+
+      <label for="commitment">If this happens, what will you do instead of restarting?</label>
+      <p class="hint">Write it as an instruction to future-you. Specific beats inspiring — "message one past customer" beats "stay positive."</p>
+      <textarea id="commitment" placeholder="If [trigger] happens, I will..."></textarea>
+
+      <div class="suggestions">
+        <div class="sugg-label">Need a starting point? Tap one to use it:</div>
+        <span class="sugg-pill" data-fill="wait">Wait one full week before deciding anything</span>
+        <span class="sugg-pill" data-fill="ask">Message one real customer and ask what's missing</span>
+        <span class="sugg-pill" data-fill="reread">Reread why I started this before I touch anything else</span>
+      </div>
+
+      <div class="btn-row">
+        <button class="secondary" id="backTo1">Back</button>
+        <button id="toStep3" disabled>Generate my plan →</button>
+      </div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="step" id="step-3">
+      <div class="eyebrow">Step 3 of 3</div>
+      <h1 class="title">Your plan is set</h1>
+      <p class="subtitle">Save it somewhere you'll actually see again on the day it matters.</p>
+
+      <div class="plan-card">
+        <div class="pc-eyebrow">The Bad Day Plan</div>
+        <div class="pc-title">Decided in advance</div>
+        <div class="pc-offer" id="pc-offer">—</div>
+        <hr>
+        <div class="pc-field-label">If this happens</div>
+        <div class="pc-trigger" id="pc-trigger">—</div>
+        <div class="pc-field-label">I will</div>
+        <div class="pc-commitment" id="pc-commitment">—</div>
+        <div class="pc-date" id="pc-date">—</div>
+      </div>
+
+      <p class="result-note">Save it somewhere you'll actually see again — your camera roll, your notes app — not just this screen.</p>
+
+      <div class="btn-row">
+        <button class="secondary" id="backTo2">Edit</button>
+        <button id="savePlan">Save as image ↓</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  let state = { offerName:'', trigger:'', triggerLabel:'', commitment:'' };
+
+  const triggerLabels = {
+    'silence':'Silence — no response, no feedback',
+    'no-sales':'No sales yet',
+    'comparison':'Seeing someone else\'s version',
+    'criticism':'A comment that stings',
+    'boredom':'The new-idea itch',
+    'other':'Their own pattern'
+  };
+
+  const stepMeta = [
+    { label:'Watch', caption:'Before you start...' },
+    { label:'Trigger', caption:'Naming the day before it arrives...' },
+    { label:'The Plan', caption:'Deciding while it\'s calm...' },
+    { label:'Done', caption:'Set. Ready for the day you need it.' }
+  ];
+
+  const stepIds = ['step-0','step-1','step-2','step-3'];
+
+  // Build ribbon
+  const ribbon = document.getElementById('ribbon');
+  stepMeta.forEach((s, i) => {
+    if(i > 0){
+      const line = document.createElement('div');
+      line.className = 'ribbon-line';
+      ribbon.appendChild(line);
+    }
+    const wrap = document.createElement('div');
+    wrap.className = 'ribbon-step';
+    wrap.innerHTML = `<div class="ribbon-circle" id="rc-${i+1}">${i+1}</div><div class="ribbon-label" id="rl-${i+1}">${s.label}</div>`;
+    ribbon.appendChild(wrap);
+  });
+
+  function setRibbon(n){
+    for(let i=1;i<=4;i++){
+      const c = document.getElementById('rc-'+i);
+      const l = document.getElementById('rl-'+i);
+      c.classList.remove('active','done');
+      l.classList.remove('active');
+      if(i < n){ c.classList.add('done'); c.textContent = '✓'; }
+      if(i === n){ c.classList.add('active'); l.classList.add('active'); c.textContent = i; }
+      if(i > n){ c.textContent = i; }
+    }
+    document.getElementById('stepCaption').textContent = stepMeta[n-1].caption;
+  }
+
+  function showStep(n){
+    document.querySelectorAll('.step').forEach(s=>s.classList.remove('active'));
+    document.getElementById(stepIds[n-1]).classList.add('active');
+    setRibbon(n);
+    window.scrollTo({top:0, behavior:'smooth'});
+  }
+
+  document.getElementById('skipIntro').addEventListener('click', ()=> showStep(2));
+  document.getElementById('toStep1').addEventListener('click', ()=> showStep(2));
+
+  document.getElementById('startOverBtn').addEventListener('click', ()=>{
+    state = { offerName:'', trigger:'', triggerLabel:'', commitment:'' };
+    document.getElementById('offerName').value = '';
+    document.getElementById('commitment').value = '';
+    document.querySelectorAll('.trigger-option').forEach(b=>b.classList.remove('selected'));
+    document.getElementById('toStep2').disabled = true;
+    document.getElementById('toStep3').disabled = true;
+    showStep(2);
+  });
+
+  // Step 1
+  const offerInput = document.getElementById('offerName');
+  const triggerGrid = document.getElementById('triggerGrid');
+  const toStep2 = document.getElementById('toStep2');
+
+  function checkStep1(){
+    toStep2.disabled = !(state.offerName.trim().length > 1 && state.trigger);
+  }
+
+  offerInput.addEventListener('input', e=>{
+    state.offerName = e.target.value;
+    checkStep1();
+  });
+
+  triggerGrid.addEventListener('click', e=>{
+    const btn = e.target.closest('.trigger-option');
+    if(!btn) return;
+    document.querySelectorAll('.trigger-option').forEach(b=>b.classList.remove('selected'));
+    btn.classList.add('selected');
+    state.trigger = btn.dataset.trigger;
+    state.triggerLabel = triggerLabels[state.trigger];
+    checkStep1();
+  });
+
+  toStep2.addEventListener('click', ()=>{
+    document.getElementById('triggerDisplay').textContent = state.triggerLabel;
+    showStep(3);
+  });
+
+  // Step 2
+  const commitmentInput = document.getElementById('commitment');
+  const toStep3 = document.getElementById('toStep3');
+
+  commitmentInput.addEventListener('input', e=>{
+    state.commitment = e.target.value;
+    toStep3.disabled = state.commitment.trim().length < 6;
+  });
+
+  document.querySelectorAll('.sugg-pill').forEach(p=>{
+    p.addEventListener('click', ()=>{
+      commitmentInput.value = p.textContent;
+      state.commitment = p.textContent;
+      toStep3.disabled = false;
+      commitmentInput.focus();
+    });
+  });
+
+  document.getElementById('backTo1').addEventListener('click', ()=> showStep(2));
+
+  toStep3.addEventListener('click', ()=>{
+    document.getElementById('pc-offer').textContent = state.offerName;
+    document.getElementById('pc-trigger').textContent = state.triggerLabel;
+    document.getElementById('pc-commitment').textContent = state.commitment;
+    const today = new Date();
+    document.getElementById('pc-date').textContent = 'Written ' + today.toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' });
+    showStep(4);
+  });
+
+  // Step 3
+  document.getElementById('backTo2').addEventListener('click', ()=> showStep(3));
+  document.getElementById('savePlan').addEventListener('click', ()=>{
+    const btn = document.getElementById('savePlan');
+    const original = btn.textContent;
+    btn.textContent = 'Saving...';
+    btn.disabled = true;
+    const target = document.querySelector('.plan-card');
+    html2canvas(target, { backgroundColor: '#2B2117', scale: 2 }).then(canvas => {
+      const link = document.createElement('a');
+      link.download = 'bad-day-plan.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      btn.textContent = original;
+      btn.disabled = false;
+    }).catch(()=>{
+      btn.textContent = 'Couldn\'t save — try a screenshot';
+      btn.disabled = false;
+    });
+  });
+
+  // init
+  setRibbon(1);
+</script>
+
+</body>
+</html>
