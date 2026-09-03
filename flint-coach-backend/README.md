@@ -24,6 +24,12 @@ from one merged pool instead — that'd need a different design.
   `bdp_...` access token on purchase, stores it in Redis, and **emails the
   customer their link directly via Resend** (see "Why we email it
   ourselves" below).
+- `GET /api/my-links?email=...` — looks up every product an email has
+  active access to (OOF + Bad Day Plan today, more as the ladder grows) and
+  renders a simple page of "Launch" links. Built for a Systeme.io Membership
+  Site to use as a single logged-in dashboard, without embedding any tool's
+  actual HTML/JS inside Systeme's editor — see "The membership dashboard"
+  below.
 
 ## Required environment variables
 
@@ -83,6 +89,43 @@ vercel --prod
 
 After deploying, update `FLINT_API_URL` in `../bad-day-plan.html` to point
 at `https://<your-deployment>.vercel.app/api/flint-coach`.
+
+## The membership dashboard
+
+As the sales ladder grows (OOF → Bad Day Plan bump → upsell → future
+products), customers shouldn't have to dig through separate confirmation
+emails to find each tool. Rather than rebuilding login/accounts from
+scratch, or embedding the actual custom-HTML tools inside Systeme's
+page/lesson editor (real risk of it mangling the layout, same reasoning as
+choosing GitHub Pages over Systeme for hosting Bad Day Plan itself), the
+plan is:
+
+1. A Systeme.io **Membership Site** is the single login/dashboard.
+   Sections unlock per product using the same purchase tags already driving
+   Redis provisioning (`Purchased - One Offer Forward`, `Purchased - Bad Day
+   Plan`, etc.).
+2. Each unlocked section just has a **"Launch" button** linking to
+   `/api/my-links?email={{contact.email}}` (or whatever Systeme's actual
+   merge-tag syntax is for the logged-in member's own email — confirm this
+   in the Membership editor, it wasn't verifiable from here).
+3. `my-links` looks up that email's tokens via the `oof:email:*` /
+   `bdp:email:*` reverse-lookup keys (already written by each product's
+   provisioning webhook) and renders direct links to each tool, each still
+   hosted exactly where it already is (Vercel / GitHub Pages) — nothing
+   about the tools themselves changes.
+
+**Security note:** this endpoint trusts whatever email it's given — it
+doesn't independently verify the requester. That's fine as long as the URL
+is only ever reached via a link Systeme generates for the logged-in
+member's own email inside the authenticated membership area (Systeme's
+login is the actual access boundary here). Don't link this URL anywhere
+public. Same trust-by-obscurity tradeoff as the access tokens elsewhere in
+this project, not enterprise-grade auth — acceptable for now, worth
+revisiting if this grows into something handling more sensitive access.
+
+Add `OOF_BASE_URL` as an optional env var if OOF's tool ever moves off
+`https://one-offer-forward-product.vercel.app` (defaults to that, matching
+`provision-token.js`'s own default).
 
 ## Still open
 
