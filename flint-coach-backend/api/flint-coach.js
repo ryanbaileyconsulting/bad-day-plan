@@ -250,6 +250,9 @@ export default async function handler(req, res) {
     });
   } catch (error) {
     console.error("Flint coach error:", error);
-    return res.status(500).json({ ok: false, error: "flint_coach_failed" });
+    // TEMPORARY debug detail — remove once deployment issues are sorted.
+    return res
+      .status(500)
+      .json({ ok: false, error: "flint_coach_failed", debug: String(error?.message || error) });
   }
 }
