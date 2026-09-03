@@ -392,9 +392,24 @@
   }
 
   /* Flint chat */
-  .flint-fab{
+  .flint-fab-wrap{
     position:fixed;
     right:20px; bottom:20px;
+    z-index:100;
+    display:flex;
+    flex-direction:column;
+    align-items:flex-end;
+    gap:8px;
+  }
+  .flint-fab-caption{
+    font-family:'Playfair Display', serif;
+    font-size:14px;
+    color:var(--near-black);
+    background:rgba(255,255,255,0.85);
+    padding:4px 12px;
+    border-radius:20px;
+  }
+  .flint-fab{
     background:var(--gold);
     color:var(--header-bg);
     border:none;
@@ -406,7 +421,6 @@
     letter-spacing:0.01em;
     box-shadow:0 8px 24px rgba(43,33,23,0.25);
     cursor:pointer;
-    z-index:100;
     transition:opacity .2s;
   }
   .flint-fab:hover{ opacity:0.9; }
@@ -681,7 +695,10 @@
   </div>
 </div>
 
-<button type="button" class="flint-fab" id="flintFab">Talk to Flint</button>
+<div class="flint-fab-wrap">
+  <div class="flint-fab-caption">AI Follow-Through Coach</div>
+  <button type="button" class="flint-fab" id="flintFab">Talk to Flint</button>
+</div>
 
 <div class="flint-overlay" id="flintOverlay">
   <div class="flint-panel">
